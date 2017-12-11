@@ -395,7 +395,13 @@ static int xmp_write(const char *path, const char *buf, size_t size,
   char fullpaths[2][PATH_MAX];
   int fd;
   int res;
-
+  int spareSize = 0;
+  char *driveA;
+  char *driveB;
+if(size>512){
+  spareSize = size - 512;
+  size = 512;
+} 
   (void) fi;
 
   sprintf(fullpaths[0], "%s%s", global_context.driveA, path);
@@ -407,8 +413,20 @@ static int xmp_write(const char *path, const char *buf, size_t size,
     fd = open(fullpath, O_WRONLY);
     if (fd == -1)
       return -errno;
-
-    res = pwrite(fd, buf, size, offset);
+  if(i==0){
+for(int f=0; f<size; f++){
+driveA[f] = buf[f];
+}
+    res = pwrite(fd, driveA, size, offset);
+  }
+  else if(i==1){
+if(spareSize !=0){
+for(int f=0; f<spareSize; f++){
+driveB[f] = buf[512+f];
+}
+ }
+   res = pwrite(fd, driveB, spareSize, offset);
+  }
     if (res == -1)
       res = -errno;
 
